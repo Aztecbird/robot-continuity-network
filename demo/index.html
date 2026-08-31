@@ -1188,8 +1188,28 @@
 
       recordedChunks = [];
       try {
-        const stream = canvas.captureStream(30);
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        const videoStream = canvas.captureStream(30);
+        
+        // Capture audio stream from the voiceover audio element
+        let combinedStream = videoStream;
+        if (voiceAudio && (voiceAudio.captureStream || voiceAudio.mozCaptureStream)) {
+          const audioStream = (voiceAudio.captureStream ? voiceAudio.captureStream() : voiceAudio.mozCaptureStream());
+          const audioTracks = audioStream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            combinedStream = new MediaStream([
+              ...videoStream.getVideoTracks(),
+              audioTracks[0]
+            ]);
+          }
+        }
+
+        // Support webm with fallback
+        let mime = 'video/webm;codecs=vp9,opus';
+        if (!MediaRecorder.isTypeSupported(mime)) {
+          mime = 'video/webm';
+        }
+
+        mediaRecorder = new MediaRecorder(combinedStream, { mimeType: mime });
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) recordedChunks.push(e.data);
         };
@@ -1198,14 +1218,34 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = 'RCN_Robot_Continuity_Demo.webm';
+          a.download = 'Robot_Continuity_Demo_Presentation.webm';
           a.click();
-          log('success', 'DOWNLOAD', 'Saved video: RCN_Robot_Continuity_Demo.webm');
+          log('success', 'DOWNLOAD', 'Exported video file: Robot_Continuity_Demo_Presentation.webm');
+          document.getElementById('txtRecBtn').innerText = 'Record Video';
+          document.getElementById('recDot').style.animation = 'none';
         };
+
         mediaRecorder.start();
-        document.getElementById('txtRecBtn').innerText = 'Stop Recording';
-        document.getElementById('recDot').style.animation = 'pulse 1s infinite';
-        log('info', 'RECORDER', 'Started canvas screen recording. Play demo now!');
+        document.getElementById('txtRecBtn').innerText = 'Stop & Save Video';
+        document.getElementById('recDot').style.animation = 'pulse 0.8s infinite';
+        log('info', 'RECORDER', 'Recording video + audio track simultaneously...');
+
+        // Automatically start the voiceover demo if not already playing!
+        if (voiceAudio.paused) {
+          playWithVoiceover();
+        }
+
+        // Auto-stop when audio finishes
+        voiceAudio.addEventListener('ended', () => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            setTimeout(() => {
+              if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+              }
+            }, 1000);
+          }
+        }, { once: true });
+
       } catch (err) {
         log('err', 'RECORDER', 'MediaRecorder error: ' + err.message);
       }
