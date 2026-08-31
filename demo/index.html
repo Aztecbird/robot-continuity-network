@@ -535,19 +535,30 @@
 
       <!-- Controls -->
       <div class="control-bar">
-        <div>
-          <button class="btn btn-primary" id="btnAutoProof" onclick="runAutomatedProof()">
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="btnVoiceDemo" onclick="playWithVoiceover()" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            Play with Voiceover (MP3)
+          </button>
+          <button class="btn btn-outline" id="btnAutoProof" onclick="runAutomatedProof()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Play 3-Minute Proof
+            Auto Play (Silent)
           </button>
           <button class="btn btn-danger" id="btnTriggerFault" onclick="triggerMotorFault()">
-            Simulate Motor Fault
+            Trigger Fault
           </button>
         </div>
-        <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn btn-outline" id="btnRecordVideo" onclick="toggleScreenRecord()" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+            <span id="recDot" style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block; margin-right: 4px;"></span>
+            <span id="txtRecBtn">Record Video</span>
+          </button>
           <button class="btn btn-outline" onclick="resetSimulation()">Reset</button>
         </div>
       </div>
+
+      <!-- Hidden Audio Element -->
+      <audio id="voiceAudio" src="voiceover.mp3" preload="auto"></audio>
     </section>
 
     <!-- Right Column: Verification Ledger & Step Progress -->
@@ -908,6 +919,88 @@
       log('success', 'PASSPORT_BOUND', 'URN urn:rcn:identity:alpha-07b9 bound to chassis-mir-882');
       log('success', 'RESUMED', 'Mission PL-904 resuming from step 3: "transit_aisle_b"');
       log('success', 'ZERO_DOWNTIME', 'Hot-swap completed. Zero re-mapping required.');
+    }
+
+    const voiceAudio = document.getElementById('voiceAudio');
+    let voiceSyncInterval = null;
+    let faultTriggeredByVoice = false;
+    let adaptTriggeredByVoice = false;
+    let resumeTriggeredByVoice = false;
+
+    function playWithVoiceover() {
+      resetSimulation();
+      faultTriggeredByVoice = false;
+      adaptTriggeredByVoice = false;
+      resumeTriggeredByVoice = false;
+
+      voiceAudio.currentTime = 0;
+      voiceAudio.play().then(() => {
+        log('info', 'VOICEOVER', 'Playing synchronized voiceover narration (Pablo - ElevenLabs)...');
+      }).catch(err => {
+        log('warn', 'AUDIO', 'Audio playback note: ' + err.message);
+      });
+
+      if (voiceSyncInterval) clearInterval(voiceSyncInterval);
+      voiceSyncInterval = setInterval(() => {
+        const ct = voiceAudio.currentTime;
+
+        // Fault at ~15s
+        if (ct >= 15 && !faultTriggeredByVoice) {
+          faultTriggeredByVoice = true;
+          triggerMotorFault();
+        }
+        // Yard scan and adapt at ~37s
+        if (ct >= 37 && !adaptTriggeredByVoice) {
+          adaptTriggeredByVoice = true;
+          executeCompatibilityAndAdapt();
+        }
+        // Robot Beta takes over at ~58s
+        if (ct >= 58 && !resumeTriggeredByVoice) {
+          resumeTriggeredByVoice = true;
+          resumeOnRobotB();
+        }
+        if (voiceAudio.ended) {
+          clearInterval(voiceSyncInterval);
+        }
+      }, 200);
+    }
+
+    // Built-in Video Recorder
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    function toggleScreenRecord() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        document.getElementById('txtRecBtn').innerText = 'Record Video';
+        document.getElementById('recDot').style.animation = 'none';
+        log('info', 'RECORDER', 'Exporting video recording...');
+        return;
+      }
+
+      recordedChunks = [];
+      try {
+        const stream = canvas.captureStream(30);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'RCN_Robot_Continuity_Demo.webm';
+          a.click();
+          log('success', 'DOWNLOAD', 'Saved video: RCN_Robot_Continuity_Demo.webm');
+        };
+        mediaRecorder.start();
+        document.getElementById('txtRecBtn').innerText = 'Stop Recording';
+        document.getElementById('recDot').style.animation = 'pulse 1s infinite';
+        log('info', 'RECORDER', 'Started canvas screen recording. Play demo now!');
+      } catch (err) {
+        log('err', 'RECORDER', 'MediaRecorder error: ' + err.message);
+      }
     }
 
     function runAutomatedProof() {
