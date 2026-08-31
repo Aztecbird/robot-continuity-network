@@ -638,12 +638,13 @@
     const ctx = canvas.getContext('2d');
 
     let simState = {
-      phase: 1, // 1: Active, 2: Fault, 3: Transfer/Adapt, 4: Resumed
+      phase: 1, // 1: Active, 2: Fault, 3: Transfer/Adapt, 4: Resumed, 5: Post-Mission Showcase
       robotA: { x: 90, y: 180, targetX: 280, targetY: 180, status: 'nominal', color: '#06b6d4', progress: 0 },
       robotB: { x: 300, y: 350, targetX: 300, targetY: 350, status: 'standby', color: '#64748b', progress: 0 },
       timerStart: null,
       elapsedMs: 0,
-      autoProofRunning: false
+      autoProofRunning: false,
+      currentSubtitle: ""
     };
 
     function resizeCanvas() {
@@ -754,6 +755,187 @@
         ctx.arc(px, py, 6, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // POST-MISSION GRAPHIC SHOWCASE (Phase 5: Concluding Vision & Architecture)
+      if (simState.phase === 5) {
+        drawPostMissionShowcase(w, h);
+      }
+
+      // SUBTITLE BANNER (Matches voiceover text live)
+      if (simState.currentSubtitle) {
+        drawSubtitleBanner(w, h, simState.currentSubtitle);
+      }
+    }
+
+    function drawSubtitleBanner(w, h, text) {
+      ctx.save();
+      const bannerH = 42;
+      const bannerY = h - bannerH - 12;
+      const textMetrics = ctx.measureText(text);
+      const bannerW = Math.min(w - 40, 720);
+      const bannerX = (w - bannerW) / 2;
+
+      // Background pill
+      ctx.fillStyle = 'rgba(6, 12, 24, 0.88)';
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // Icon dot
+      ctx.fillStyle = '#06b6d4';
+      ctx.beginPath();
+      ctx.arc(bannerX + 22, bannerY + bannerH / 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtitle text
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '500 13px Plus Jakarta Sans';
+      ctx.textAlign = 'left';
+      ctx.fillText(text, bannerX + 36, bannerY + bannerH / 2 + 5);
+
+      ctx.restore();
+    }
+
+    function drawPostMissionShowcase(w, h) {
+      ctx.save();
+
+      // Frosted backdrop overlay
+      ctx.fillStyle = 'rgba(6, 10, 20, 0.88)';
+      ctx.fillRect(0, 0, w, h);
+
+      const cardW = Math.min(w - 60, 680);
+      const cardH = Math.min(h - 80, 420);
+      const cardX = (w - cardW) / 2;
+      const cardY = (h - cardH) / 2 - 15;
+
+      // Main Card Frame
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = 'rgba(6, 182, 212, 0.25)';
+      ctx.shadowBlur = 25;
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, 16);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Header Tag
+      ctx.fillStyle = '#06b6d4';
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('ROBOT CONTINUITY PROTOCOL • RCN-01 / RCN-02', w / 2, cardY + 36);
+
+      // Core Motto / Thesis
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px Plus Jakarta Sans';
+      ctx.fillText('THE BODY CAN CHANGE. THE CONTINUITY REMAINS.', w / 2, cardY + 68);
+
+      // 3 High-Impact Metric Cards
+      const boxW = (cardW - 60) / 3;
+      const boxY = cardY + 95;
+      const boxH = 75;
+
+      // Metric 1: MTTR
+      drawMetricPill(cardX + 20, boxY, boxW, boxH, '< 45 SECONDS', 'SWAP RECOVERY TIME', 'vs. 3.5h legacy re-provisioning', '#10b981');
+
+      // Metric 2: Re-mapping
+      drawMetricPill(cardX + 30 + boxW, boxY, boxW, boxH, '0 MINUTES', 'FACILITY RE-MAPPING', '100% semantic map preserved', '#06b6d4');
+
+      // Metric 3: Experience
+      drawMetricPill(cardX + 40 + boxW * 2, boxY, boxW, boxH, 'ZERO LOSS', 'OPERATIONAL MEMORY', 'Tasks, heuristics, credentials', '#f59e0b');
+
+      // ARCHITECTURE FLOW DIAGRAM (Center)
+      const flowY = cardY + 225;
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('DECOUPLED ARCHITECTURE IN ACTION', w / 2, flowY - 20);
+
+      // Left Node: Chassis Alpha
+      drawFlowNode(w / 2 - 190, flowY, 'CHASSIS ALPHA', 'MiR-501 (Wiped & Retired)', '#ef4444', false);
+
+      // Center Node: Identity & Memory Vault
+      drawFlowNode(w / 2, flowY, 'RCN MEMORY VAULT', 'Identity + Task + Map (Persists)', '#06b6d4', true);
+
+      // Right Node: Chassis Beta
+      drawFlowNode(w / 2 + 190, flowY, 'CHASSIS BETA', 'MiR-882 (Bound & Resumed)', '#10b981', false);
+
+      // Arrows between nodes
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(w / 2 - 110, flowY + 12);
+      ctx.lineTo(w / 2 - 75, flowY + 12);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + 75, flowY + 12);
+      ctx.lineTo(w / 2 + 110, flowY + 12);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Footer: Open Standard & GitHub Callout
+      const footerY = cardY + cardH - 35;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.beginPath();
+      ctx.roundRect(cardX + 30, footerY - 20, cardW - 60, 36, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.fillText('★ github.com/Aztecbird/robot-continuity-network', w / 2, footerY + 3);
+
+      ctx.restore();
+    }
+
+    function drawMetricPill(x, y, w, h, val, label, sub, color) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 16px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText(val, x + w / 2, y + 26);
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 10px Plus Jakarta Sans';
+      ctx.fillText(label, x + w / 2, y + 44);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px Plus Jakarta Sans';
+      ctx.fillText(sub, x + w / 2, y + 60);
+    }
+
+    function drawFlowNode(x, y, title, sub, color, isCenter) {
+      const nodeW = 145;
+      const nodeH = 45;
+      ctx.fillStyle = isCenter ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255, 255, 255, 0.03)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isCenter ? 2 : 1;
+      ctx.beginPath();
+      ctx.roundRect(x - nodeW / 2, y - nodeH / 2 + 12, nodeW, nodeH, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText(title, x, y + 7);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '9px Plus Jakarta Sans';
+      ctx.fillText(sub, x, y + 23);
     }
 
     function drawRobot(x, y, color, label, isFaulted) {
@@ -944,6 +1126,25 @@
       voiceSyncInterval = setInterval(() => {
         const ct = voiceAudio.currentTime;
 
+        // Subtitles synchronized with Pablo's ElevenLabs track
+        if (ct < 14) {
+          simState.currentSubtitle = "In commercial robotics, a robot body is replaceable hardware...";
+        } else if (ct < 26) {
+          simState.currentSubtitle = "Here, Robot Titan-04 suffers an unrecoverable drive motor stall.";
+        } else if (ct < 37) {
+          simState.currentSubtitle = "RCN instantly captures an immutable, cryptographically signed Memory Vault snapshot.";
+        } else if (ct < 48) {
+          simState.currentSubtitle = "RCN scans spare fleet bodies. Underpowered units are rejected. Chassis Beta passes.";
+        } else if (ct < 58) {
+          simState.currentSubtitle = "The adaptation layer recalculates velocity limits and sensor routing for Beta's wheelbase.";
+        } else if (ct < 70) {
+          simState.currentSubtitle = "Chassis Beta authenticates the passport and resumes pallet delivery in under 45 seconds.";
+        } else if (ct < 82) {
+          simState.currentSubtitle = "Zero facility re-mapping. Zero operational data loss.";
+        } else {
+          simState.currentSubtitle = "The body can change. The continuity remains. Explore the open standard on GitHub.";
+        }
+
         // Fault at ~15s
         if (ct >= 15 && !faultTriggeredByVoice) {
           faultTriggeredByVoice = true;
@@ -959,10 +1160,17 @@
           resumeTriggeredByVoice = true;
           resumeOnRobotB();
         }
+        // Phase 5: Post-Mission Showcase at ~70s
+        if (ct >= 70 && simState.phase === 4) {
+          simState.phase = 5;
+          log('success', 'SHOWCASE', 'Mission concluded. Displaying RCN Architecture & Continuity Ledger.');
+          document.getElementById('txtGlobalState').innerText = 'OPEN STANDARD • RCN-01 / RCN-02';
+        }
+
         if (voiceAudio.ended) {
           clearInterval(voiceSyncInterval);
         }
-      }, 200);
+      }, 150);
     }
 
     // Built-in Video Recorder
@@ -1013,6 +1221,16 @@
 
     function resetSimulation() {
       simState.phase = 1;
+      simState.currentSubtitle = "";
+      if (voiceAudio) {
+        voiceAudio.pause();
+        voiceAudio.currentTime = 0;
+      }
+      if (voiceSyncInterval) clearInterval(voiceSyncInterval);
+      faultTriggeredByVoice = false;
+      adaptTriggeredByVoice = false;
+      resumeTriggeredByVoice = false;
+
       simState.robotA = { x: 90, y: 180, targetX: 280, targetY: 180, status: 'nominal', color: '#06b6d4', progress: 0 };
       simState.robotB = { x: canvas.width * 0.45, y: 340, targetX: 300, targetY: 350, status: 'standby', color: '#64748b', progress: 0 };
       simState.timerStart = null;
