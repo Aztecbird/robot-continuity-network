@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MemoryVaultManifest",
+  "description": "Standard schema for the decoupled memory, task state, and semantic experience layer (RCN-02).",
+  "type": "object",
+  "required": [
+    "vault_version",
+    "vault_id",
+    "robot_id",
+    "snapshot_timestamp",
+    "portable_meaning",
+    "body_specific_cache",
+    "checksum"
+  ],
+  "properties": {
+    "vault_version": {
+      "type": "string",
+      "enum": ["1.0.0"]
+    },
+    "vault_id": {
+      "type": "string",
+      "pattern": "^urn:rcn:vault:[a-f0-9\\-]+$"
+    },
+    "robot_id": {
+      "type": "string"
+    },
+    "snapshot_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "snapshot_trigger": {
+      "type": "string",
+      "enum": ["scheduled", "manual", "hardware_fault", "decommission", "site_transfer"]
+    },
+    "portable_meaning": {
+      "type": "object",
+      "required": ["semantic_map", "active_tasks", "learned_preferences", "incident_lessons"],
+      "properties": {
+        "semantic_map": {
+          "type": "object",
+          "required": ["map_id", "coordinate_frame", "named_zones", "known_obstacles"],
+          "properties": {
+            "map_id": { "type": "string" },
+            "coordinate_frame": { "type": "string" },
+            "named_zones": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["zone_id", "name", "bounds", "access_policy"],
+                "properties": {
+                  "zone_id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "bounds": {
+                    "type": "object",
+                    "properties": {
+                      "x_min": { "type": "number" },
+                      "x_max": { "type": "number" },
+                      "y_min": { "type": "number" },
+                      "y_max": { "type": "number" }
+                    }
+                  },
+                  "speed_limit_mps": { "type": "number" },
+                  "access_policy": { "type": "string" }
+                }
+              }
+            },
+            "known_obstacles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "x": { "type": "number" },
+                  "y": { "type": "number" },
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "active_tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["task_id", "title", "status", "priority", "execution_cursor"],
+            "properties": {
+              "task_id": { "type": "string" },
+              "title": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["queued", "in_progress", "interrupted_by_fault", "completed"]
+              },
+              "priority": { "type": "integer" },
+              "target_location": {
+                "type": "object",
+                "properties": {
+                  "zone": { "type": "string" },
+                  "x": { "type": "number" },
+                  "y": { "type": "number" }
+                }
+              },
+              "execution_cursor": {
+                "type": "object",
+                "required": ["step_index", "completed_steps", "remaining_steps"],
+                "properties": {
+                  "step_index": { "type": "integer" },
+                  "completed_steps": { "type": "array", "items": { "type": "string" } },
+                  "remaining_steps": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "learned_preferences": {
+          "type": "object",
+          "properties": {
+            "docking_approach_angle_deg": { "type": "number" },
+            "quiet_hours_enabled": { "type": "boolean" },
+            "preferred_corridors": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "incident_lessons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lesson_id": { "type": "string" },
+              "timestamp": { "type": "string" },
+              "location": { "type": "string" },
+              "observation": { "type": "string" },
+              "heuristic": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "body_specific_cache": {
+      "type": "object",
+      "description": "Hardware-dependent calibration data to be recalculated upon adaptation to a new body.",
+      "properties": {
+        "last_known_wheel_radius": { "type": "number" },
+        "camera_extrinsics_matrix": { "type": "array" },
+        "motor_pid_tuning": { "type": "object" },
+        "odometry_drift_offsets": { "type": "object" }
+      }
+    },
+    "checksum": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

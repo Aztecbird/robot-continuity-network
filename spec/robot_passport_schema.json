@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RobotPassport",
+  "description": "Standard schema for a persistent robot identity independent of its physical chassis (RCN-01).",
+  "type": "object",
+  "required": [
+    "passport_version",
+    "robot_id",
+    "callsign",
+    "owner_operator",
+    "issued_at",
+    "capability_requirements",
+    "permissions",
+    "vault_manifest_hash",
+    "signature"
+  ],
+  "properties": {
+    "passport_version": {
+      "type": "string",
+      "enum": ["1.0.0"]
+    },
+    "robot_id": {
+      "type": "string",
+      "pattern": "^urn:rcn:identity:[a-f0-9\\-]+$"
+    },
+    "callsign": {
+      "type": "string"
+    },
+    "owner_operator": {
+      "type": "object",
+      "required": ["org_id", "org_name", "contact_email"],
+      "properties": {
+        "org_id": { "type": "string" },
+        "org_name": { "type": "string" },
+        "contact_email": { "type": "string" }
+      }
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "current_embodiment": {
+      "type": "object",
+      "properties": {
+        "chassis_id": { "type": "string" },
+        "manufacturer": { "type": "string" },
+        "model": { "type": "string" },
+        "bound_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "capability_requirements": {
+      "type": "object",
+      "required": ["min_payload_kg", "drive_type", "required_sensors"],
+      "properties": {
+        "min_payload_kg": { "type": "number", "minimum": 0 },
+        "drive_type": {
+          "type": "string",
+          "enum": ["differential", "omni", "ackermann", "legged", "tracked"]
+        },
+        "required_sensors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "compute_tier": {
+          "type": "string",
+          "enum": ["edge_basic", "edge_ai_mid", "edge_ai_high"]
+        }
+      }
+    },
+    "installed_skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["skill_id", "name", "version", "vendor"],
+        "properties": {
+          "skill_id": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "vendor": { "type": "string" },
+          "safety_certification": { "type": "string" }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "required": ["site_zones", "max_speed_mps", "hazardous_access"],
+      "properties": {
+        "site_id": { "type": "string" },
+        "site_zones": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "max_speed_mps": { "type": "number", "maximum": 5.0 },
+        "hazardous_access": { "type": "boolean" },
+        "door_access_tokens": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "vault_manifest_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "audit_trail": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "event_type", "chassis_id", "hash"],
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "event_type": { "type": "string" },
+          "chassis_id": { "type": "string" },
+          "hash": { "type": "string" }
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "type": "string", "enum": ["HMAC-SHA256", "ED25519"] },
+        "key_id": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
+  }
+}

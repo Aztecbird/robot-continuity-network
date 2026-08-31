@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Continuity Network • 3-Minute Proof of Concept</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: rgba(16, 24, 40, 0.85);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.35);
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: rgba(10, 15, 30, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: white;
+      font-size: 1.1rem;
+      box-shadow: 0 0 16px var(--accent-cyan-glow);
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text span {
+      font-size: 0.78rem;
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .badge-status {
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-green);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px var(--accent-green); }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 1.5rem;
+      height: calc(100vh - 75px);
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-header h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-content {
+      padding: 1.25rem;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .prop-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .prop-row:last-child { border-bottom: none; }
+    .prop-name { color: var(--text-muted); }
+    .prop-val { font-family: var(--font-mono); font-weight: 500; }
+
+    /* Center Stage Simulation */
+    .stage-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      flex: 1;
+      border-radius: 12px;
+      background: radial-gradient(circle at 50% 50%, #111a2e 0%, #080c14 100%);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Simulation Control Bar */
+    .control-bar {
+      margin-top: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-ui);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #06b6d4, #0284c7);
+      color: white;
+      box-shadow: 0 4px 14px var(--accent-cyan-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Metric Counters */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .metric-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Terminal & Ledger */
+    .terminal-logs {
+      background: #05080f;
+      border-radius: 8px;
+      padding: 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      line-height: 1.5;
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .log-line {
+      margin-bottom: 0.35rem;
+      word-break: break-all;
+    }
+
+    .log-ts { color: var(--text-muted); }
+    .log-info { color: var(--accent-cyan); }
+    .log-success { color: var(--accent-green); }
+    .log-warn { color: var(--accent-amber); }
+    .log-err { color: var(--accent-red); }
+
+    /* Timeline Stepper */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .timeline-step {
+      display: flex;
+      gap: 0.85rem;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .step-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .timeline-step.active .step-icon {
+      background: var(--accent-cyan);
+      color: black;
+      box-shadow: 0 0 10px var(--accent-cyan-glow);
+    }
+
+    .timeline-step.done .step-icon {
+      background: var(--accent-green);
+      color: black;
+    }
+
+    .step-content h3 {
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .step-content p {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid var(--accent-cyan);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 650px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    }
+
+    pre {
+      background: #05080f;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">RCN</div>
+      <div class="brand-text">
+        <h1>ROBOT CONTINUITY NETWORK</h1>
+        <span>Decoupled Embodied Identity • 3-Minute Proof of Concept</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="badge-status" id="badgeGlobalState">
+        <div class="badge-pulse"></div>
+        <span id="txtGlobalState">FLEET RUNTIME ACTIVE</span>
+      </div>
+      <button class="btn btn-outline" onclick="openPassportModal()">Inspect Passport</button>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main>
+
+    <!-- Left Column: Identities & Hardware Profiles -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Embodied Agents</h2>
+      </div>
+      <div class="panel-content">
+
+        <!-- Robot Identity Card -->
+        <div class="card" style="border-color: rgba(6, 182, 212, 0.3);">
+          <div class="card-title">
+            <span>PERSISTENT IDENTITY (PASSPORT)</span>
+            <span style="color: var(--accent-cyan); font-family: var(--font-mono);">RCN-01</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Callsign</span>
+            <span class="prop-val" style="color: var(--accent-cyan);">Titan-04</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Robot ID</span>
+            <span class="prop-val">urn:rcn:identity:alpha-07b9</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Operator</span>
+            <span class="prop-val">Logix Corp (Frankfurt)</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Signature Seal</span>
+            <span class="prop-val" style="color: var(--accent-green);">HMAC-SHA256 (Valid)</span>
+          </div>
+        </div>
+
+        <!-- Robot A Hardware Profile -->
+        <div class="card" id="cardRobotA">
+          <div class="card-title">
+            <span>CHASSIS ALPHA (CURRENT BODY)</span>
+            <span id="tagChassisA" style="color: var(--accent-green); font-size: 0.72rem;">ACTIVE</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Chassis ID</span>
+            <span class="prop-val">chassis-mir-501</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Model</span>
+            <span class="prop-val">MiR-600 Industrial</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Health Status</span>
+            <span class="prop-val" id="valHealthA" style="color: var(--accent-green);">100% (Nominal)</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Payload Loaded</span>
+            <span class="prop-val" id="valPayloadA">340 kg (Pallet PL-904)</span>
+          </div>
+        </div>
+
+        <!-- Robot B Hardware Profile (Spare) -->
+        <div class="card" id="cardRobotB" style="opacity: 0.6;">
+          <div class="card-title">
+            <span>CHASSIS BETA (YARD SPARE)</span>
+            <span id="tagChassisB" style="color: var(--text-muted); font-size: 0.72rem;">STANDBY</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Chassis ID</span>
+            <span class="prop-val">chassis-mir-882</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Model</span>
+            <span class="prop-val">MiR-600-Rev2</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Sensors</span>
+            <span class="prop-val">2D/3D LiDAR + Depth</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-name">Capability Match</span>
+            <span class="prop-val" id="valCompatB" style="color: var(--text-muted);">Unverified</span>
+          </div>
+        </div>
+
+        <!-- Metrics Box -->
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value" id="valMTTR">0s</div>
+            <div class="metric-label">Swap Latency (MTTR)</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="valDataLoss">0%</div>
+            <div class="metric-label">Experience Preserved</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Center Column: 2D Spatial Floor Plan & Live Simulation -->
+    <section class="stage-container">
+      <div class="canvas-wrapper">
+        <canvas id="simCanvas"></canvas>
+      </div>
+
+      <!-- Controls -->
+      <div class="control-bar">
+        <div>
+          <button class="btn btn-primary" id="btnAutoProof" onclick="runAutomatedProof()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Play 3-Minute Proof
+          </button>
+          <button class="btn btn-danger" id="btnTriggerFault" onclick="triggerMotorFault()">
+            Simulate Motor Fault
+          </button>
+        </div>
+        <div>
+          <button class="btn btn-outline" onclick="resetSimulation()">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Verification Ledger & Step Progress -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Verification Engine</h2>
+      </div>
+      <div class="panel-content">
+
+        <!-- Stepper -->
+        <div class="timeline">
+          <div class="timeline-step active" id="step1">
+            <div class="step-icon">1</div>
+            <div class="step-content">
+              <h3>Active Dispatch</h3>
+              <p>Titan-04 carrying pallet to Cold Storage Rack 14</p>
+            </div>
+          </div>
+          <div class="timeline-step" id="step2">
+            <div class="step-icon">2</div>
+            <div class="step-content">
+              <h3>Chassis Fault & Snapshot</h3>
+              <p>Actuator stall triggers atomic memory vault snapshot</p>
+            </div>
+          </div>
+          <div class="timeline-step" id="step3">
+            <div class="step-icon">3</div>
+            <div class="step-content">
+              <h3>Compatibility & Target Adaptation</h3>
+              <p>Spare chassis verified and velocity profiles recomputed</p>
+            </div>
+          </div>
+          <div class="timeline-step" id="step4">
+            <div class="step-icon">4</div>
+            <div class="step-content">
+              <h3>Hot-Swap Resumption</h3>
+              <p>Chassis Beta takes over mission with zero re-mapping</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Ledger / Audit Log -->
+        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+          <div class="card-title">
+            <span>CRYPTOGRAPHIC AUDIT LEDGER</span>
+            <span style="color: var(--accent-green);">IMMUTABLE</span>
+          </div>
+          <div class="terminal-logs" id="terminalLogs">
+            <div class="log-line"><span class="log-ts">[10:50:00]</span> <span class="log-info">SYSTEM_INIT:</span> RCN Agent mounted to chassis-mir-501</div>
+            <div class="log-line"><span class="log-ts">[10:50:02]</span> <span class="log-success">VERIFIED:</span> Passport signature valid (Key: fleet_root_2026)</div>
+            <div class="log-line"><span class="log-ts">[10:50:05]</span> <span class="log-info">MISSION:</span> Task PL-904 active. Step 3/6 executing.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Passport Modal -->
+  <div class="modal-overlay" id="modalPassport" onclick="closePassportModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.1rem; color: var(--accent-cyan);">Robot Passport Record (RCN-01)</h2>
+        <button class="btn btn-outline" style="padding: 0.3rem 0.6rem;" onclick="closePassportModal()">✕</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        The cryptographically signed digital identity that persists across hardware swaps.
+      </p>
+      <pre id="jsonPassportDisplay"></pre>
+    </div>
+  </div>
+
+  <script>
+    // Canvas & Simulation State
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let simState = {
+      phase: 1, // 1: Active, 2: Fault, 3: Transfer/Adapt, 4: Resumed
+      robotA: { x: 90, y: 180, targetX: 280, targetY: 180, status: 'nominal', color: '#06b6d4', progress: 0 },
+      robotB: { x: 300, y: 350, targetX: 300, targetY: 350, status: 'standby', color: '#64748b', progress: 0 },
+      timerStart: null,
+      elapsedMs: 0,
+      autoProofRunning: false
+    };
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function log(type, tag, msg) {
+      const container = document.getElementById('terminalLogs');
+      const now = new Date().toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      let tagClass = 'log-info';
+      if (type === 'success') tagClass = 'log-success';
+      if (type === 'warn') tagClass = 'log-warn';
+      if (type === 'err') tagClass = 'log-err';
+      div.innerHTML = `<span class="log-ts">[${now}]</span> <span class="${tagClass}">${tag}:</span> ${msg}`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Drawing the Warehouse Grid
+    function drawWarehouse() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Draw Grid Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 1;
+      const gridSize = 40;
+      for (let x = 0; x < w; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // Zone 1: Inbound Bay (Left)
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.05)';
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
+      ctx.strokeRect(30, 40, 180, 280);
+      ctx.fillRect(30, 40, 180, 280);
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+      ctx.font = '11px Plus Jakarta Sans';
+      ctx.fillText('ZONE A: INBOUND UNLOADING DOCK', 40, 60);
+
+      // Zone 2: Cold Storage (Right)
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.05)';
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+      ctx.strokeRect(w - 240, 40, 210, 280);
+      ctx.fillRect(w - 240, 40, 210, 280);
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.6)';
+      ctx.fillText('ZONE B: HIGH-BAY COLD STORAGE', w - 230, 60);
+
+      // Storage Racks
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(w - 180, 90 + i * 50, 130, 25);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '9px JetBrains Mono';
+        ctx.fillText(`RACK #${12 + i}`, w - 165, 106 + i * 50);
+      }
+
+      // Target Rack #14 Highlight
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(w - 182, 188, 134, 29);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText('TARGET: RACK 14', w - 165, 206);
+
+      // Transit Path
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+      ctx.setLineDash([4, 6]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(90, 180);
+      ctx.lineTo(w - 120, 200);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Robot A
+      drawRobot(simState.robotA.x, simState.robotA.y, simState.robotA.color, 'Titan-04 (MiR-501)', simState.robotA.status === 'fault');
+
+      // Draw Robot B
+      drawRobot(simState.robotB.x, simState.robotB.y, simState.robotB.color, 'Spare Chassis (MiR-882)', false);
+
+      // Draw Network Transfer Ray during phase 3
+      if (simState.phase === 3) {
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#06b6d4';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.moveTo(simState.robotA.x, simState.robotA.y);
+        ctx.lineTo(simState.robotB.x, simState.robotB.y);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Packet particle
+        const t = (Date.now() % 1000) / 1000;
+        const px = simState.robotA.x + (simState.robotB.x - simState.robotA.x) * t;
+        const py = simState.robotA.y + (simState.robotB.y - simState.robotA.y) * t;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRobot(x, y, color, label, isFaulted) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Footprint
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = isFaulted ? 25 : 12;
+      if (isFaulted) ctx.shadowColor = '#ef4444';
+      ctx.beginPath();
+      ctx.roundRect(-22, -16, 44, 32, 6);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Wheels
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-20, -19, 12, 4);
+      ctx.fillRect(8, -19, 12, 4);
+      ctx.fillRect(-20, 15, 12, 4);
+      ctx.fillRect(8, 15, 12, 4);
+
+      // LiDAR beam
+      if (!isFaulted && color !== '#64748b') {
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, 36, -0.4, 0.4);
+        ctx.stroke();
+      }
+
+      // Pallet
+      if (!isFaulted && color !== '#64748b') {
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(-10, -10, 20, 20);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '8px JetBrains Mono';
+        ctx.fillText('PL', -5, 4);
+      }
+
+      // Label
+      ctx.fillStyle = isFaulted ? '#ef4444' : '#e2e8f0';
+      ctx.font = '10px Plus Jakarta Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, 0, 30);
+
+      if (isFaulted) {
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 12px Plus Jakarta Sans';
+        ctx.fillText('⚡ STALLED', 0, -22);
+      }
+
+      ctx.restore();
+    }
+
+    // Animation Loop
+    function animate() {
+      const w = canvas.width;
+
+      if (simState.phase === 1) {
+        // Move Robot A towards mid
+        if (simState.robotA.x < w * 0.4) {
+          simState.robotA.x += 0.8;
+        }
+      } else if (simState.phase === 4) {
+        // Move Robot B to the destination rack
+        const destX = w - 140;
+        const destY = 200;
+        const dx = destX - simState.robotB.x;
+        const dy = destY - simState.robotB.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 2) {
+          simState.robotB.x += (dx / dist) * 1.6;
+          simState.robotB.y += (dy / dist) * 1.6;
+        } else {
+          simState.robotB.status = 'completed';
+          document.getElementById('txtGlobalState').innerText = 'MISSION COMPLETED';
+          document.getElementById('badgeGlobalState').style.borderColor = 'rgba(16, 185, 129, 0.6)';
+        }
+      }
+
+      drawWarehouse();
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // Demonstration Logic
+    function triggerMotorFault() {
+      if (simState.phase !== 1) return;
+      simState.phase = 2;
+      simState.robotA.status = 'fault';
+      simState.robotA.color = '#ef4444';
+      simState.timerStart = Date.now();
+
+      // Update UI
+      document.getElementById('txtGlobalState').innerText = 'HARDWARE FAULT DETECTED';
+      document.getElementById('badgeGlobalState').style.color = '#ef4444';
+      document.getElementById('badgeGlobalState').style.background = 'rgba(239, 68, 68, 0.15)';
+      document.getElementById('valHealthA').innerText = 'CRITICAL (Motor Stall)';
+      document.getElementById('valHealthA').style.color = '#ef4444';
+      document.getElementById('tagChassisA').innerText = 'HALTED';
+      document.getElementById('tagChassisA').style.color = '#ef4444';
+
+      document.getElementById('step1').className = 'timeline-step done';
+      document.getElementById('step2').className = 'timeline-step active';
+
+      log('err', 'FAULT_OVERLOAD', 'Left motor driver inverter thermal trip on chassis-mir-501');
+      log('warn', 'RCN_CAPTURE', 'Triggering atomic memory snapshot urn:rcn:vault:snap-8829');
+      log('info', 'IMMUTABLE_HASH', 'Computed portable meaning hash: sha256:d5c2e0b57112ea11...');
+
+      // Start MTTR Timer
+      const interval = setInterval(() => {
+        if (simState.phase === 4) {
+          clearInterval(interval);
+          return;
+        }
+        const ms = Date.now() - simState.timerStart;
+        document.getElementById('valMTTR').innerText = (ms / 1000).toFixed(1) + 's';
+      }, 100);
+
+      setTimeout(() => {
+        executeCompatibilityAndAdapt();
+      }, 1600);
+    }
+
+    function executeCompatibilityAndAdapt() {
+      simState.phase = 3;
+      document.getElementById('step2').className = 'timeline-step done';
+      document.getElementById('step3').className = 'timeline-step active';
+
+      log('info', 'YARD_SCAN', 'Scanning available spare embodiments in Frankfurt Facility FRA-03...');
+      log('warn', 'REJECTED', 'Chassis-turtle-01: Fails payload (requires 300kg, supports 50kg)');
+      log('success', 'COMPATIBLE', 'Chassis-mir-882 satisfies all 4 capability criteria');
+
+      // Adapt Robot B
+      document.getElementById('cardRobotB').style.opacity = '1';
+      document.getElementById('valCompatB').innerText = 'PASSED (4/4 Checks)';
+      document.getElementById('valCompatB').style.color = '#10b981';
+
+      log('info', 'ADAPTATION', 'Recalculated turn-rate limit for wheelbase 0.82m: 4.39 rad/s');
+      log('info', 'SECURE_WIPE', 'Chassis-mir-501 local operational cache purged and invalidated');
+
+      setTimeout(() => {
+        resumeOnRobotB();
+      }, 2000);
+    }
+
+    function resumeOnRobotB() {
+      simState.phase = 4;
+      simState.robotB.color = '#10b981';
+      simState.robotB.status = 'active';
+
+      document.getElementById('step3').className = 'timeline-step done';
+      document.getElementById('step4').className = 'timeline-step done';
+
+      document.getElementById('tagChassisB').innerText = 'EMBODIED & ACTIVE';
+      document.getElementById('tagChassisB').style.color = '#10b981';
+      document.getElementById('txtGlobalState').innerText = 'CONTINUITY RESTORED';
+      document.getElementById('badgeGlobalState').style.color = '#10b981';
+      document.getElementById('badgeGlobalState').style.background = 'rgba(16, 185, 129, 0.15)';
+
+      log('success', 'PASSPORT_BOUND', 'URN urn:rcn:identity:alpha-07b9 bound to chassis-mir-882');
+      log('success', 'RESUMED', 'Mission PL-904 resuming from step 3: "transit_aisle_b"');
+      log('success', 'ZERO_DOWNTIME', 'Hot-swap completed. Zero re-mapping required.');
+    }
+
+    function runAutomatedProof() {
+      resetSimulation();
+      log('info', 'DEMO_START', 'Starting 3-Minute Proof automated sequence...');
+      setTimeout(() => {
+        triggerMotorFault();
+      }, 2000);
+    }
+
+    function resetSimulation() {
+      simState.phase = 1;
+      simState.robotA = { x: 90, y: 180, targetX: 280, targetY: 180, status: 'nominal', color: '#06b6d4', progress: 0 };
+      simState.robotB = { x: canvas.width * 0.45, y: 340, targetX: 300, targetY: 350, status: 'standby', color: '#64748b', progress: 0 };
+      simState.timerStart = null;
+
+      document.getElementById('valMTTR').innerText = '0s';
+      document.getElementById('valHealthA').innerText = '100% (Nominal)';
+      document.getElementById('valHealthA').style.color = '#10b981';
+      document.getElementById('tagChassisA').innerText = 'ACTIVE';
+      document.getElementById('tagChassisA').style.color = '#10b981';
+      document.getElementById('cardRobotB').style.opacity = '0.6';
+      document.getElementById('valCompatB').innerText = 'Unverified';
+      document.getElementById('valCompatB').style.color = 'var(--text-muted)';
+      document.getElementById('tagChassisB').innerText = 'STANDBY';
+      document.getElementById('tagChassisB').style.color = 'var(--text-muted)';
+      document.getElementById('txtGlobalState').innerText = 'FLEET RUNTIME ACTIVE';
+      document.getElementById('badgeGlobalState').style.color = '#10b981';
+      document.getElementById('badgeGlobalState').style.background = 'rgba(16, 185, 129, 0.15)';
+
+      document.getElementById('step1').className = 'timeline-step active';
+      document.getElementById('step2').className = 'timeline-step';
+      document.getElementById('step3').className = 'timeline-step';
+      document.getElementById('step4').className = 'timeline-step';
+
+      log('info', 'RESET', 'Simulation reset to nominal fleet state');
+    }
+
+    function openPassportModal() {
+      fetch('../spec/examples/robot_alpha_passport.json')
+        .then(r => r.text())
+        .then(t => {
+          document.getElementById('jsonPassportDisplay').innerText = t;
+          document.getElementById('modalPassport').style.display = 'flex';
+        })
+        .catch(() => {
+          document.getElementById('jsonPassportDisplay').innerText = JSON.stringify({
+            "passport_version": "1.0.0",
+            "robot_id": "urn:rcn:identity:alpha-unit-07b9",
+            "callsign": "Forklift-Titan-04",
+            "owner_operator": { "org_name": "Logix Intralogistics Corp" },
+            "permissions": { "site_zones": ["inbound", "cold_storage"], "max_speed_mps": 1.8 },
+            "signature": { "algorithm": "HMAC-SHA256", "status": "VERIFIED" }
+          }, null, 2);
+          document.getElementById('modalPassport').style.display = 'flex';
+        });
+    }
+
+    function closePassportModal() {
+      document.getElementById('modalPassport').style.display = 'none';
+    }
+
+    // Set initial position of Robot B based on canvas size
+    setTimeout(() => {
+      simState.robotB.x = canvas.width * 0.45;
+      simState.robotB.y = 330;
+    }, 100);
+  </script>
+</body>
+</html>

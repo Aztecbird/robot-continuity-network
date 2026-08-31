@@ -1,0 +1,86 @@
+{
+  "vault_version": "1.0.0",
+  "vault_id": "urn:rcn:vault:snapshot-20260831-104921",
+  "robot_id": "urn:rcn:identity:alpha-unit-07b9",
+  "snapshot_timestamp": "2026-08-31T10:49:21Z",
+  "snapshot_trigger": "hardware_fault",
+  "portable_meaning": {
+    "semantic_map": {
+      "map_id": "fra-03-level1-warehouse-grid",
+      "coordinate_frame": "map_global_enu",
+      "named_zones": [
+        {
+          "zone_id": "zone_inbound_dock",
+          "name": "Inbound Unloading Bay",
+          "bounds": { "x_min": 0.0, "x_max": 25.0, "y_min": 0.0, "y_max": 15.0 },
+          "speed_limit_mps": 1.2,
+          "access_policy": "authorized_dock_units_only"
+        },
+        {
+          "zone_id": "zone_aisle_b_cold_storage",
+          "name": "Aisle B High Bay",
+          "bounds": { "x_min": 25.0, "x_max": 75.0, "y_min": 0.0, "y_max": 40.0 },
+          "speed_limit_mps": 1.8,
+          "access_policy": "standard_transit"
+        },
+        {
+          "zone_id": "zone_outbound_staging",
+          "name": "Outbound Pallet Staging Area",
+          "bounds": { "x_min": 75.0, "x_max": 110.0, "y_min": 10.0, "y_max": 50.0 },
+          "speed_limit_mps": 1.5,
+          "access_policy": "staging_protocol"
+        }
+      ],
+      "known_obstacles": [
+        { "id": "obs_temp_pallet_stack", "x": 42.5, "y": 18.2, "type": "temporary_blockage" },
+        { "id": "obs_charging_station_a", "x": 12.0, "y": 3.5, "type": "infrastructure" }
+      ]
+    },
+    "active_tasks": [
+      {
+        "task_id": "task_dispatch_order_88291",
+        "title": "Transfer Pallet #PL-904 from Inbound Bay 3 to Cold Storage Rack 14",
+        "status": "interrupted_by_fault",
+        "priority": 1,
+        "target_location": {
+          "zone": "zone_aisle_b_cold_storage",
+          "x": 58.4,
+          "y": 24.1
+        },
+        "execution_cursor": {
+          "step_index": 2,
+          "completed_steps": [
+            "navigate_to_inbound_bay_3",
+            "verify_pallet_qr_code_PL904",
+            "engage_fork_lift_and_weigh_340kg"
+          ],
+          "remaining_steps": [
+            "transit_aisle_b_to_rack_14",
+            "verify_rack_depth_safety",
+            "deposit_pallet_and_confirm_rfid"
+          ]
+        }
+      }
+    ],
+    "learned_preferences": {
+      "docking_approach_angle_deg": 88.5,
+      "quiet_hours_enabled": false,
+      "preferred_corridors": ["corridor_central_main", "transit_lane_east"]
+    },
+    "incident_lessons": [
+      {
+        "lesson_id": "lesson_2026_slippage_cold_zone",
+        "timestamp": "2026-08-20T14:12:00Z",
+        "location": "Aisle B Entrance Threshold",
+        "observation": "Condensation on floor caused 12% traction loss on deceleration",
+        "heuristic": "Reduce entry deceleration by 35% when crossing zone boundary"
+      }
+    ]
+  },
+  "body_specific_cache": {
+    "last_known_wheel_radius": 0.125,
+    "motor_pid_tuning": { "kp": 1.45, "ki": 0.08, "kd": 0.12 },
+    "odometry_drift_offsets": { "linear": 0.012, "angular": 0.003 }
+  },
+  "checksum": "sha256:d5c2e0b57112ea11b5e5898d89e4776f8a452174c8be1e39a3f2d22d250c6bfe"
+}

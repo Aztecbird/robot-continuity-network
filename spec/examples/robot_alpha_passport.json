@@ -1,0 +1,60 @@
+{
+  "passport_version": "1.0.0",
+  "robot_id": "urn:rcn:identity:alpha-unit-07b9",
+  "callsign": "Forklift-Titan-04",
+  "owner_operator": {
+    "org_id": "org_logix_global_99",
+    "org_name": "Logix Intralogistics Corp",
+    "contact_email": "ops-fleet@logix-corp.internal"
+  },
+  "issued_at": "2026-08-15T08:00:00Z",
+  "current_embodiment": {
+    "chassis_id": "chassis-mir-amr-501",
+    "manufacturer": "MobileIndRobots",
+    "model": "MiR-600-Industrial",
+    "bound_at": "2026-08-15T08:15:00Z"
+  },
+  "capability_requirements": {
+    "min_payload_kg": 300.0,
+    "drive_type": "differential",
+    "required_sensors": ["2d_lidar_safety", "depth_camera_front", "wheel_encoders"],
+    "compute_tier": "edge_ai_mid"
+  },
+  "installed_skills": [
+    {
+      "skill_id": "skill_pallet_dock_v2",
+      "name": "High-Precision Pallet Docking",
+      "version": "2.4.1",
+      "vendor": "AutonomousSkills Inc",
+      "safety_certification": "ISO-3691-4-Compliant"
+    },
+    {
+      "skill_id": "skill_dynamic_obstacle_avoid",
+      "name": "Pedestrian Anticipation & Smooth Bypass",
+      "version": "1.8.0",
+      "vendor": "Logix Core Robotics",
+      "safety_certification": "CE-Marked"
+    }
+  ],
+  "permissions": {
+    "site_id": "facility-fra-03-frankfurt",
+    "site_zones": ["zone_inbound_dock", "zone_aisle_b_cold_storage", "zone_outbound_staging"],
+    "max_speed_mps": 1.8,
+    "hazardous_access": false,
+    "door_access_tokens": ["tok_door_airlock_c_passcode_9918", "tok_fast_roller_gate_2"]
+  },
+  "vault_manifest_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "audit_trail": [
+    {
+      "timestamp": "2026-08-15T08:15:00Z",
+      "event_type": "EMBODIMENT_BIND",
+      "chassis_id": "chassis-mir-amr-501",
+      "hash": "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
+    }
+  ],
+  "signature": {
+    "algorithm": "HMAC-SHA256",
+    "key_id": "key_logix_fleet_root_cert_2026",
+    "value": "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+  }
+}
